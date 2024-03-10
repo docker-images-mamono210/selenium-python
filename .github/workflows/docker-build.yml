@@ -1,0 +1,53 @@
+---
+name: build
+on: [deployment, push]
+
+jobs:
+  github-container-registory:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@master
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@master
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@master
+
+      - name: Login to GitHub Container registry
+        uses: docker/login-action@master
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.CR_PAT}}
+
+      - name: Build and export to Docker
+        uses: docker/build-push-action@master
+        with:
+          context: .
+          file: Dockerfile
+          load: true
+
+      - name: Build and push
+        uses: docker/build-push-action@master
+        with:
+          file: Dockerfile
+          push: true
+          tags: ghcr.io/docker-images-mamono210/selenium-python:latest
+
+  trailing-whitespace:
+    name: Find Trailing Whitespace
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - uses: harupy/find-trailing-whitespace@56310d70ae8fd21afec8d4307d2d9ab6c15e7c5d
+
+  lintAllTheThings:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - name: yaml-lint
+        uses: ibiqlik/action-yamllint@665205c3255fcf157ef8dc9a40d527fe025a4bc8
+        with:
+          config_file: .yamllint
